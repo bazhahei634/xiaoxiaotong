@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>校晓通 Campus Clarity</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --ink: #3b465c;
+    --ink-light: #7e8b9f;
+    --ink-lighter: #aab5c8;
+    --line: #dce5f0;
+    --blue-deep: #7b98cf;   
+    --blue-main: #94b1e1;   
+  }
+  
+  body {
+    background: linear-gradient(135deg, #e8f0f9 0%, #dae4f2 50%, #ebf1f8 100%);
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: var(--ink);
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .card-soft {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255, 0.9);
+    box-shadow: 0 4px 20px rgba(122, 153, 207, 0.08);
+    border-radius: 1.25rem;
+  }
+  
+  .card-task { background: linear-gradient(135deg, #f0f5fc 0%, #e2ecf9 100%); border: 1px solid #ccdcf2; border-radius: 1.25rem; }
+  .card-subtext { background: linear-gradient(135deg, #f6f3fa 0%, #ece6f5 100%); border: 1px solid #dbd0ea; border-radius: 1.25rem; }
+  .card-remind { background: linear-gradient(135deg, #eef6f8 0%, #e0eff3 100%); border: 1px solid #c9e3e9; border-radius: 1.25rem; }
+  
+  .soft-input, .soft-select {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 0.875rem;
+    transition: all 0.2s;
+  }
+  .soft-input:focus, .soft-select:focus {
+    border-color: var(--blue-main);
+    box-shadow: 0 0 0 3px rgba(148, 177, 225, 0.15);
+    outline: none;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, #94b1e1 0%, #7b98cf 100%);
+    color: white;
+    border-radius: 0.875rem;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(148, 177, 225, 0.3);
+  }
+  .btn-primary:hover { filter: brightness(1.05); transform: translateY(-1px); }
+  
+  .btn-soft {
+    background: #ffffff;
+    color: var(--ink-light);
+    border: 1px solid var(--line);
+    border-radius: 0.875rem;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+  .btn-soft:hover { background: #f4f7fc; border-color: #c2d4ed; }
+  
+  .tab-active { background: #ffffff; box-shadow: 0 2px 8px rgba(122, 153, 207, 0.15); color: var(--blue-deep); font-weight: 600; }
+  .tab-inactive { color: var(--ink-light); }
+  .tab-inactive:hover { color: var(--blue-main); }
+  
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(170, 181, 200, 0.5); border-radius: 3px; }
+  
+  .icon { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-lg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+
+  @keyframes popIn {
+    0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .animate-pop { animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+  @media (max-width: 768px) {
+    .h-\[calc\(100vh-140px\)\] { height: auto !important; }
+    .btn-primary, .btn-soft { padding: 0.75rem 1rem; }
+  }
+</style>
+</head>
+<body class="antialiased">
+
+<!-- ========== 顶部区域 ========== -->
+<div id="topBar" class="max-w-7xl mx-auto px-6 pt-6 pb-2 relative flex items-center justify-between">
+  <div class="flex items-center gap-2 text-xs" style="color:var(--ink-light);">
+    <svg viewBox="0 0 24 24" class="icon" style="color:var(--blue-main); width:14px; height:14px;">
+      <rect x="3" y="4" width="18" height="18" rx="2"/>
+      <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+    <span id="todayDate">——</span>
+  </div>
+  
+  <div class="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-sm md:text-base font-semibold tracking-wide" style="color:var(--blue-deep);">
+    <svg viewBox="0 0 24 24" class="icon" style="color:var(--blue-main); width:18px; height:18px;">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+    校晓通向你发来一条邀请～
+  </div>
+  
+  <div class="w-16"></div>
+</div>
+
+<!-- ========== 页面1：配置页 ========== -->
+<div id="setupPage" class="max-w-xl mx-auto p-6 mt-2">
+  <div class="text-center mb-8">
+    <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white shadow-sm mb-4" style="border:1px solid var(--line);">
+      <svg viewBox="0 0 24 24" class="icon-lg" style="color:var(--blue-main); width:24px; height:24px;">
+        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+        <path d="M14 3v5h5"/>
+        <path d="M9 13h6M9 17h4"/>
+      </svg>
+    </div>
+    <h1 class="text-2xl font-semibold tracking-tight" style="color:var(--ink);">校晓通 Campus Clarity</h1>
+    <p class="text-sm mt-2" style="color:var(--ink-light);">把校园通知翻译成人话</p>
+  </div>
+
+  <div class="card-soft p-6 mb-4">
+    <div class="flex items-center gap-2 mb-5">
+      <span class="w-1 h-4 rounded-full" style="background:var(--blue-main);"></span>
+      <h2 class="text-sm font-semibold" style="color:var(--ink);">设置你的信息</h2>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="text-xs block mb-1.5 font-medium" style="color:var(--ink-light);">学历层次 <span style="color:#d97777;">*</span></label>
+        <select id="cfgDegree" class="soft-select w-full px-4 py-2.5 text-sm" style="color:var(--ink);">
+          <option value="">请选择学历</option>
+          <option>本科生</option>
+          <option>硕士研究生</option>
+          <option>博士研究生</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs block mb-1.5 font-medium" style="color:var(--ink-light);">学生职务 <span style="color:#d97777;">*</span></label>
+        <select id="cfgRole" class="soft-select w-full px-4 py-2.5 text-sm" style="color:var(--ink);">
+          <option value="">请选择职务</option>
+          <option>普通学生</option>
+          <option>学委</option>
+          <option>班长</option>
+          <option>团支书</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs block mb-1.5 font-medium" style="color:var(--ink-light);">学院 <span style="color:#d97777;">*</span></label>
+        <select id="cfgCollege" class="soft-select w-full px-4 py-2.5 text-sm" style="color:var(--ink);">
+          <option value="">请选择学院</option>
+          <option>国际经济贸易学院</option><option>金融学院</option><option>国际商学院</option>
+          <option>法学院</option><option>英语学院</option><option>外语学院</option>
+          <option>信息学院</option><option>保险学院</option><option>统计学院</option>
+          <option>国际关系学院</option><option>文学与国际传播学院</option><option>马克思主义学院</option>
+          <option>国际发展合作学院</option><option>政府管理学院</option><option>体育部</option><option>其他</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs block mb-1.5 font-medium" style="color:var(--ink-light);">专业 <span style="color:#d97777;">*</span></label>
+        <input id="cfgMajor" placeholder="如：金融学" class="soft-input w-full px-4 py-2.5 text-sm" style="color:var(--ink);">
+      </div>
+    </div>
+  </div>
+
+  <div class="flex gap-3">
+    <button id="enterBtn" class="btn-primary flex-1 py-3 font-medium text-sm">保存并进入</button>
+    <button id="resetBtn" class="btn-soft px-5 py-3 text-sm font-medium">重置数据</button>
+  </div>
+</div>
+
+<!-- ========== 页面2：主功能页 ========== -->
+<div id="mainPage" class="max-w-7xl mx-auto p-6 hidden">
+  <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+    <div class="flex items-center gap-3">
+      <div class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white shadow-sm" style="border:1px solid var(--line);">
+        <svg viewBox="0 0 24 24" class="icon-lg" style="color:var(--blue-main); width:20px; height:20px;">
+          <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/>
+          <path d="M14 3v5h5"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-lg font-semibold tracking-tight" style="color:var(--ink);">校晓通 <span style="color:var(--ink-light); font-weight:normal;">Campus Clarity</span></h1>
+        <p class="text-xs mt-0.5" style="color:var(--ink-light);" id="userInfo"></p>
+      </div>
+    </div>
+    <button id="shareBtn" class="btn-soft text-xs px-4 py-2">
+      <svg viewBox="0 0 24 24" class="icon" style="width:14px; height:14px;">
+        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+      生成分享卡片
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <div class="lg:col-span-4 card-soft p-5 flex flex-col lg:h-[calc(100vh-180px)]">
+      <div class="flex gap-1 mb-5 p-1 rounded-xl" style="background:rgba(220, 230, 245, 0.6);">
+        <button id="tabFeedBtn" class="flex-1 text-xs py-2 rounded-lg font-medium tab-active transition">聚合流</button>
+        <button id="tabCalBtn" class="flex-1 text-xs py-2 rounded-lg font-medium tab-inactive transition">截止日期</button>
+        <button id="tabMatBtn" class="flex-1 text-xs py-2 rounded-lg font-medium tab-inactive transition">准备材料</button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto pr-1 scrollbar-thin">
+        <div id="panelFeed" class="space-y-2">
+          <div id="feedEmpty" class="text-center text-xs py-10" style="color:var(--ink-lighter);">暂无通知</div>
+          <div id="feedList" class="space-y-2"></div>
+        </div>
+        <div id="panelCalendar" class="hidden space-y-2">
+          <div id="calEmpty" class="text-center text-xs py-10" style="color:var(--ink-lighter);">暂无截止日程</div>
+          <div id="calList" class="space-y-2"></div>
+        </div>
+        <div id="panelMaterials" class="hidden space-y-2">
+          <div id="matEmpty" class="text-center text-xs py-10" style="color:var(--ink-lighter);">暂无材料要求</div>
+          <div id="matList" class="space-y-2"></div>
+        </div>
+      </div>
+      <button id="clearAllBtn" class="mt-4 w-full text-xs py-2 rounded-xl transition" style="color:#d97777; border:1px solid #f5d0d0; background:#fff5f5;">清空所有历史数据</button>
+    </div>
+
+    <div class="lg:col-span-8 flex flex-col lg:h-[calc(100vh-180px)] gap-5">
+      <div class="card-soft p-5 flex-shrink-0">
+        <div class="flex justify-between items-center mb-3 flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <span class="w-1 h-4 rounded-full" style="background:var(--blue-deep);"></span>
+              <h2 class="text-sm font-semibold" style="color:var(--ink);">通知原文</h2>
+            </div>
+            <div class="flex items-center gap-3">
+                <input id="urlInput" type="text" placeholder="粘贴网页链接..." class="text-xs px-3 py-1.5 border rounded-lg w-44" style="border-color:var(--line); outline:none; background:#f8fafc;">
+                <button id="parseUrlBtn" class="text-xs transition font-medium" style="color:var(--blue-deep);">读取链接</button>
+                <span class="text-gray-300">|</span>
+                <button id="fillBtn" class="text-xs transition" style="color:var(--ink-light);">填入示例</button>
+                <button id="clearInputBtn" class="text-xs transition" style="color:#d97777;">清空</button>
+            </div>
+        </div>
+        <textarea id="input" rows="4" placeholder="把学校通知原文粘贴到这里，或在右上角粘贴链接读取..." class="soft-input w-full p-4 text-sm resize-none"></textarea>
+        <button id="translateBtn" class="btn-primary w-full mt-3 py-3 font-medium text-sm tracking-wider">一键转译</button>
+      </div>
+
+      <div class="card-soft p-5 flex-1 overflow-y-auto scrollbar-thin">
+              <div id="apiErrorBox" class="hidden" style="display:none; background:#fff1f0; color:#c0392b; border:1px solid #f5c2bd; border-radius:12px; padding:14px 16px; font-size:13px; line-height:1.7; margin-bottom:16px;"></div>
+        <div id="resultPlaceholder" class="h-full flex flex-col items-center justify-center text-sm py-12" style="color:var(--ink-lighter);">
+            <div class="w-14 h-14 rounded-2xl bg-white flex items-center justify-center mb-3 shadow-sm" style="border:1px solid var(--line);">
+              <svg viewBox="0 0 24 24" class="icon-lg" style="color:var(--blue-main); width:22px; height:22px;">
+                <path d="M5 12h14M13 6l6 6-6 6"/>
+              </svg>
+            </div>
+            <p>请在左侧粘贴通知或读取链接</p>
+            <p class="mt-1.5 text-xs" style="color:var(--ink-lighter);">AI 将在下方展示翻译结果</p>
+        </div>
+        <div id="resultContent" class="hidden space-y-4"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 登录待办提醒弹窗 ========== -->
+<div id="welcomeModal" class="fixed inset-0 hidden items-center justify-center p-4 z-[60]" style="background:rgba(59, 70, 92, 0.4); backdrop-filter:blur(4px);">
+  <div class="animate-pop bg-white/95 backdrop-blur-md rounded-3xl p-6 max-w-sm w-full shadow-2xl relative overflow-hidden" style="border:1px solid #e5ecf5;">
+    <div class="absolute top-0 left-0 w-full h-1.5" style="background:linear-gradient(90deg, #94b1e1, #b4c2e6, #a3cdd8);"></div>
+    
+    <button id="closeWelcomeBtn" class="absolute top-4 right-4 p-1 rounded-full hover:bg-gray-100 transition" style="color:var(--ink-light);">
+      <svg viewBox="0 0 24 24" class="icon" style="width:20px; height:20px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+
+    <div class="text-center mb-5 mt-2">
+      <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-50 mb-3" style="color:var(--blue-deep);">
+        <svg viewBox="0 0 24 24" class="icon-lg" style="width:26px; height:26px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </div>
+      <h3 class="text-lg font-bold" style="color:var(--ink);">待办提醒</h3>
+      <p class="text-xs mt-1" style="color:var(--ink-light);">校晓通检测到你近 3 天内有以下安排</p>
+    </div>
+
+    <div id="welcomeTaskList" class="space-y-2.5 max-h-48 overflow-y-auto mb-6 pr-1 scrollbar-thin"></div>
+
+    <div class="flex gap-3">
+      <button id="dismissWelcomeBtn" class="flex-1 py-2.5 rounded-xl text-sm font-medium transition" style="background:#f4f7fc; color:var(--ink-light);">稍后处理</button>
+      <button id="viewAllTasksBtn" class="flex-1 btn-primary py-2.5 text-sm font-medium">去查看</button>
+    </div>
+  </div>
+</div>
+
+<!-- 分享弹窗 -->
+<div id="shareModal" class="fixed inset-0 hidden items-center justify-center p-4 z-50" style="background:rgba(59, 70, 92, 0.4); backdrop-filter:blur(4px);">
+  <div class="bg-white rounded-2xl p-5 max-w-md w-full shadow-2xl">
+    <div class="text-sm font-semibold mb-3" style="color:var(--ink);">分享卡片预览</div>
+    <div id="sharePreview" class="text-sm p-4 rounded-xl whitespace-pre-wrap mb-4 max-h-60 overflow-auto scrollbar-thin" style="background:#f4f7fc; color:var(--ink); border:1px solid #e2eaf4;"></div>
+    <div class="flex gap-2">
+      <button id="closeShareBtn" class="btn-soft flex-1 py-2.5 text-sm justify-center">关闭</button>
+      <button id="copyShareBtn" class="btn-primary flex-1 py-2.5 text-sm justify-center">复制文本</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function safeStr(val) {
+  if (val === null || val === undefined) return '未明确';
+  return String(val);
+}
+function loadLocalData(key) {
+    try {
+        var data = JSON.parse(localStorage.getItem(key) || '[]');
+        if (!Array.isArray(data)) return [];
+        return data.filter(function(item) { return item && typeof item === 'object' && item.task; });
+    } catch (e) { return []; }
+}
+
+var Icons = {
+  pin: '<svg viewBox="0 0 24 24" class="icon" style="color:#7b98cf;"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>',
+  check: '<svg viewBox="0 0 24 24" class="icon" style="color:#88b8a6;"><polyline points="20 6 9 17 4 12"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" class="icon" style="color:#d98c8c;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  map: '<svg viewBox="0 0 24 24" class="icon" style="color:#94b1e1;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+  bulb: '<svg viewBox="0 0 24 24" class="icon" style="color:#a88ed1;"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V18h6v-1.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>',
+  user: '<svg viewBox="0 0 24 24" class="icon" style="color:#7fa8a8;"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>',
+  paperclip: '<svg viewBox="0 0 24 24" class="icon" style="color:#8ca8d6;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>'
+};
+
+window.onload = function() {
+  var now = new Date();
+  var weekdays = ['日','一','二','三','四','五','六'];
+  var dateStr = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 · 星期' + weekdays[now.getDay()];
+  document.getElementById('todayDate').textContent = dateStr;
+
+  window.feedItems = loadLocalData('user_feed');
+  window.calendarItems = loadLocalData('user_calendar');
+  window.materialsItems = loadLocalData('user_materials');
+
+  document.getElementById('resetBtn').onclick = function() {
+      if(confirm("确定要清空所有数据并重置页面吗？")) { localStorage.clear(); location.reload(); }
+  };
+
+  document.getElementById('enterBtn').onclick = function() {
+    var degree = document.getElementById('cfgDegree').value;
+    var role = document.getElementById('cfgRole').value;
+    var college = document.getElementById('cfgCollege').value;
+    var major = document.getElementById('cfgMajor').value.trim();
+
+    if (!degree) { return alert('请选择你的学历层次！'); }
+    if (!role) { return alert('请选择你的学生职务！'); }
+    if (!college) { return alert('请选择你的学院！'); }
+    if (!major) { return alert('请填写你的专业！'); }
+
+    var combinedRole = degree + "·" + role;
+    var cfg = { degree: degree, role: combinedRole, college: college, major: major };
+    window.userConfig = cfg;
+    
+    document.getElementById('setupPage').classList.add('hidden');
+    document.getElementById('mainPage').classList.remove('hidden');
+    document.getElementById('userInfo').textContent = safeStr(cfg.college) + ' · ' + safeStr(cfg.major) + ' · ' + safeStr(cfg.role);
+    
+    renderAllPanels();
+    checkWelcomeTasks();
+  };
+
+  function switchLeftTab(activeId) {
+    document.getElementById('panelFeed').classList.add('hidden');
+    document.getElementById('panelCalendar').classList.add('hidden');
+    document.getElementById('panelMaterials').classList.add('hidden');
+    document.getElementById(activeId).classList.remove('hidden');
+
+    document.getElementById('tabFeedBtn').className = 'flex-1 text-xs py-2 rounded-lg font-medium tab-inactive transition';
+    document.getElementById('tabCalBtn').className = 'flex-1 text-xs py-2 rounded-lg font-medium tab-inactive transition';
+    document.getElementById('tabMatBtn').className = 'flex-1 text-xs py-2 rounded-lg font-medium tab-inactive transition';
+
+    if (activeId === 'panelFeed') document.getElementById('tabFeedBtn').className = 'flex-1 text-xs py-2 rounded-lg font-medium tab-active transition';
+    if (activeId === 'panelCalendar') document.getElementById('tabCalBtn').className = 'flex-1 text-xs py-2 rounded-lg font-medium tab-active transition';
+    if (activeId === 'panelMaterials') document.getElementById('tabMatBtn').className = 'flex-1 text-xs py-2 rounded-lg font-medium tab-active transition';
+  }
+
+  document.getElementById('tabFeedBtn').onclick = function() { switchLeftTab('panelFeed'); };
+  document.getElementById('tabCalBtn').onclick = function() { switchLeftTab('panelCalendar'); };
+  document.getElementById('tabMatBtn').onclick = function() { switchLeftTab('panelMaterials'); };
+
+  // 弹窗逻辑（3天过滤）
+  function checkWelcomeTasks() {
+    if (window.calendarItems.length === 0) return;
+    var now = new Date(); now.setHours(0, 0, 0, 0);
+    var threeDaysLater = new Date(now); threeDaysLater.setDate(now.getDate() + 3);
+    var urgentTasks = [];
+
+    function parseDeadlineToDate(deadlineStr) {
+        if (!deadlineStr || deadlineStr === '未明确' || deadlineStr === '无' || deadlineStr === '暂无') return null;
+        var s = String(deadlineStr).trim();
+        var y = now.getFullYear();
+
+        // 1. 标准格式：YYYY-MM-DD（或带时间）
+        var mISO = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (mISO) return new Date(parseInt(mISO[1]), parseInt(mISO[2]) - 1, parseInt(mISO[3]));
+
+        // 2. 中文格式：X月X日 / X月X号（可带时间）
+        var mMonthDay = s.match(/(\d{1,2})月(\d{1,2})[日号]/);
+        if (mMonthDay) return new Date(y, parseInt(mMonthDay[1]) - 1, parseInt(mMonthDay[2]));
+
+        // 3. 只有「X日」（默认当月）
+        var mDay = s.match(/^(\d{1,2})日?$/);
+        if (mDay) return new Date(y, now.getMonth(), parseInt(mDay[1]));
+
+        // 4. 周次+周几：第X周周X → 按校历开学日精确推算
+        var weekdayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0, '天': 0 };
+        var mWeekDay = s.match(/第(\d+)周\s*[周星期]\s*([一二三四五六日天])/);
+        if (mWeekDay) {
+            var weekNum = parseInt(mWeekDay[1]);
+            var wDay = weekdayMap[mWeekDay[2]];
+            var semStart = getSemesterStart(now);
+            var target = new Date(semStart);
+            target.setDate(semStart.getDate() + (weekNum - 1) * 7 + (wDay === 0 ? 6 : wDay - 1));
+            return target;
+        }
+
+        // 5. 只有「第X周」（取该周周一）
+        var mWeekOnly = s.match(/第(\d+)周/);
+        if (mWeekOnly) {
+            var wn = parseInt(mWeekOnly[1]);
+            var semStart2 = getSemesterStart(now);
+            var t = new Date(semStart2);
+            t.setDate(semStart2.getDate() + (wn - 1) * 7);
+            return t;
+        }
+
+        return null;
+    }
+
+    // 按校历返回「第1周周一」：秋季学期(8月及以后)为9月14日，春季学期为2月22日
+    function getSemesterStart(cur) {
+        if (cur.getMonth() >= 7) return new Date(cur.getFullYear(), 8, 14); // 9月14日
+        return new Date(cur.getFullYear(), 1, 22); // 2月22日
+    }
+
+    window.calendarItems.forEach(function(item) {
+        var taskDate = parseDeadlineToDate(item.deadline);
+        if (taskDate) {
+            // 只弹：今天 ~ 未来3天内（含今天，不含已过期）
+            if (taskDate >= now && taskDate <= threeDaysLater) urgentTasks.push(item);
+        }
+        // 解析不出日期的不弹，避免垃圾数据干扰
+    });
+
+    if (urgentTasks.length === 0) return;
+
+    urgentTasks.sort(function(a, b) { return extractSortKey(a.deadline) - extractSortKey(b.deadline); });
+    var displayTasks = urgentTasks.slice(0, 3);
+
+    var listHtml = '';
+    displayTasks.forEach(function(item) {
+        var d = safeStr(item.deadline);
+        var color = '#d97777'; var bg = '#fff5f5'; var border = '#f5d0d0';
+        listHtml += 
+          '<div class="flex items-center justify-between p-3 rounded-xl border" style="background:' + bg + '; border-color:' + border + ';">' +
+            '<div class="flex items-center gap-2 overflow-hidden">' +
+               '<span style="color:' + color + ';">' + Icons.clock + '</span>' +
+               '<span class="text-sm font-medium truncate" style="color:var(--ink); max-width:140px;">' + safeStr(item.task) + '</span>' +
+            '</div>' +
+            '<div class="text-xs font-semibold whitespace-nowrap" style="color:' + color + ';">' + d + '</div>' +
+          '</div>';
+    });
+
+    document.getElementById('welcomeTaskList').innerHTML = listHtml;
+    document.getElementById('welcomeModal').classList.remove('hidden');
+    document.getElementById('welcomeModal').classList.add('flex');
+  }
+
+  function closeWelcome() {
+    document.getElementById('welcomeModal').classList.add('hidden');
+    document.getElementById('welcomeModal').classList.remove('flex');
+  }
+
+  document.getElementById('closeWelcomeBtn').onclick = closeWelcome;
+  document.getElementById('dismissWelcomeBtn').onclick = closeWelcome;
+  document.getElementById('viewAllTasksBtn').onclick = function() {
+    closeWelcome();
+    switchLeftTab('panelCalendar');
+  };
+
+  /* ====== HiAgent 真机接口配置（校晓通智能体）====== */
+  var HIAgent = {
+    BASE: 'https://agent.uibe.edu.cn/api/proxy/api/v1',
+    API_KEY: 'dc0q26ca6jhs72pt408g',
+    APP_KEY: 'dc0otiqhp6cc72rll6tg',
+    USER_ID: 'xiaoxiaotong-local-user',
+    TIMEOUT: 20000
+  };
+
+
+  /* ====== 纯云端模式：不做任何本地规则兜底，失败只提示 ====== */
+
+  // 平台返回可能是：裸JSON / 外层引号包裹的转义字符串 / SSE 流 / 包在 answer 字段里
+  function extractAnswerText(raw) {
+    var s = String(raw == null ? '' : raw).trim();
+    if (!s) throw new Error('接口返回为空');
+    if (s.indexOf('data:') > -1) {
+      var parts = s.split('\n').filter(function(l) { return l.indexOf('data:') === 0; })
+                   .map(function(l) { return l.slice(5).trim(); });
+      if (parts.length) s = parts.join('');
+    }
+    if (s.charAt(0) === '"' && s.charAt(s.length - 1) === '"') {
+      try { s = JSON.parse(s); } catch (e) {}
+    }
+    var obj = s;
+    try { obj = (typeof s === 'string') ? JSON.parse(s) : s; } catch (e) { return s; }
+    if (obj && typeof obj === 'object') {
+      if (typeof obj.answer === 'string') return obj.answer;
+      if (obj.answer && typeof obj.answer === 'object') return JSON.stringify(obj.answer);
+      if (typeof obj.content === 'string') return obj.content;
+      if (obj.detail || obj.message) throw new Error(obj.detail || obj.message);
+    }
+    return s;
+  }
+
+  // 把智能体的回答解析成 {task, deadline, submit_to, materials[], subtext, personal_action}
+  function parseAgentPayload(text) {
+    var t = String(text || '').trim();
+    var obj = null;
+    try { obj = JSON.parse(t); } catch (e) {
+      var m = t.match(/\{[\s\S]*\}/);
+      if (m) { try { obj = JSON.parse(m[0]); } catch (e2) {} }
+    }
+    if (!obj || typeof obj !== 'object') {
+      return { task: t, deadline: '', submit_to: '', materials: [], subtext: '', personal_action: '' };
+    }
+    var mat = obj.materials;
+    if (typeof mat === 'string') mat = [mat];
+    if (!Array.isArray(mat)) mat = [];
+    return {
+      task: safeStr(obj.task || ''),
+      deadline: safeStr(obj.deadline || ''),
+      submit_to: safeStr(obj.submit_to || ''),
+      materials: mat.map(function(x) { return safeStr(String(x)); }),
+      subtext: safeStr(obj.subtext || ''),
+      personal_action: safeStr(obj.personal_action || '')
+    };
+  }
+
+  var _convId = null;
+  async function getConversationId() {
+    if (_convId) return _convId;
+    var r = await fetch(HIAgent.BASE + '/create_conversation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'ApiKey': HIAgent.API_KEY },
+      body: JSON.stringify({ UserID: HIAgent.USER_ID })
+    });
+    if (!r.ok) throw new Error('创建会话失败（HTTP ' + r.status + '）');
+    var j = await r.json();
+    _convId = (j.Conversation && j.Conversation.AppConversationID) || j.AppConversationID || null;
+    if (!_convId) throw new Error('未获取到 AppConversationID');
+    return _convId;
+  }
+
+  // 调校晓通智能体，返回纯文本回答
+  async function askHIAgent(query, signal) {
+    var conv = await getConversationId();
+    var r = await fetch(HIAgent.BASE + '/chat_query_v2', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'ApiKey': HIAgent.API_KEY },
+      body: JSON.stringify({
+        ResponseMode: 'blocking',
+        Query: query,
+        AppConversationID: conv,
+        AppKey: HIAgent.APP_KEY,
+        UserID: HIAgent.USER_ID,
+        QueryExtends: { Files: [] }
+      }),
+      signal: signal
+    });
+    if (!r.ok) {
+      var t = await r.text();
+      throw new Error('对话接口 HTTP ' + r.status + '：' + t.slice(0, 160));
+    }
+    return extractAnswerText(await r.text());
+  }
+  /* ====== 接口层结束 ====== */
+
+  document.getElementById('parseUrlBtn').onclick = async function() {
+    var url = document.getElementById('urlInput').value.trim();
+    if (!url) return alert('请先粘贴网页链接');
+    var btn = this; btn.textContent = '读取中...'; btn.disabled = true;
+    try {
+      var text = await askHIAgent('请读取以下网页链接的正文内容，只输出通知原文，不要翻译、不要解释：' + url);
+      document.getElementById('input').value = text;
+      document.getElementById('urlInput').value = '';
+    } catch (error) {
+      alert('网页读取失败，请确认链接正确，或该网站有防爬拦截。\n\n错误信息：' + error.message);
+    } finally { btn.textContent = '读取链接'; btn.disabled = false; }
+  };
+
+  document.getElementById('translateBtn').onclick = async function() {
+    var input = document.getElementById('input').value.trim();
+    if (!input) return alert('请粘贴通知或读取链接');
+
+    var btn = document.getElementById('translateBtn');
+    var originalText = btn.textContent; btn.textContent = '解析中...'; btn.disabled = true;
+    var finalRoleSafe = (window.userConfig && window.userConfig.degree) ? window.userConfig.degree : '本科生';
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function() { controller.abort(); }, HIAgent.TIMEOUT);
+
+    try {
+      var selectedRole = window.userConfig ? window.userConfig.role : '本科生';
+      var finalRole = window.userConfig ? window.userConfig.degree : '本科生';
+      
+      if (selectedRole.indexOf('学委') > -1 && input.indexOf('学委') > -1) finalRole = selectedRole;
+      else if (selectedRole.indexOf('班长') > -1 && input.indexOf('班长') > -1) finalRole = selectedRole;
+      else if (selectedRole.indexOf('团支书') > -1 && input.indexOf('团支书') > -1) finalRole = selectedRole;
+      
+      clearTimeout(timeoutId);
+      var result = null, apiErrMsg = '';
+      try {
+        var rawAnswer = await askHIAgent(input + '\n（当前学生身份：' + finalRole + '）', controller.signal);
+        result = parseAgentPayload(rawAnswer);
+        if (!result.task && !result.deadline && !result.submit_to) {
+          apiErrMsg = '智能体返回内容里没有可提取的字段';
+          result = null;
+        }
+      } catch (apiErr) {
+        apiErrMsg = (apiErr && apiErr.name === 'AbortError')
+          ? '请求超时（超过 ' + (HIAgent.TIMEOUT/1000) + ' 秒未响应）'
+          : ('云端接口未响应：' + (apiErr && apiErr.message ? apiErr.message : '未知错误'));
+      } finally {
+        clearTimeout(timeoutId);
+        btn.textContent = originalText; btn.disabled = false;
+      }
+
+      // 纯云端：拿不到有效结果就不再往下走，直接给提示，不做本地猜测
+      if (!result) {
+        showApiError(apiErrMsg || '云端未返回有效结果');
+        return;
+      }
+      hideApiError();
+      result.subtext = result.subtext || '';
+
+      renderResult(result);
+      var hasTask = !!(result.task && String(result.task).trim() && String(result.task).indexOf('无明确任务') !== 0);
+      var hasDeadline = !!(result.deadline && String(result.deadline).trim() && result.deadline !== '未明确');
+      var hasSubmitTo = !!(result.submit_to && String(result.submit_to).trim() && result.submit_to !== '未明确' && result.submit_to !== '无需提交');
+      var materialsList = (result.materials && Array.isArray(result.materials)) ? result.materials.filter(function(m) { return m && String(m).trim() !== ''; }) : [];
+      var hasMaterials = materialsList.length > 0;
+      if (hasTask) {
+          addToFeed(input, result.task, hasDeadline ? result.deadline : '未明确', hasSubmitTo ? result.submit_to : '未明确');
+          if (hasDeadline) saveToCalendar(result.task, result.deadline, hasSubmitTo ? result.submit_to : '未明确');
+          if (hasMaterials) addToMaterials(result.task, materialsList);
+      }
+      renderAllPanels();
+    } catch (error) {
+      // 纯云端：任何异常只提示，绝不用本地规则编造结果
+      showApiError('转译失败：' + (error && error.message ? error.message : '未知错误'));
+    } finally { btn.textContent = originalText; btn.disabled = false; }
+  };
+
+  function showApiError(msg) {
+    var box = document.getElementById('apiErrorBox');
+    if (box) {
+      box.textContent = '⚠️ ' + msg + '　请检查网络后重试；现场可直接用平台后台投屏演示。';
+      box.classList.remove('hidden');
+      box.style.display = 'block';
+    } else {
+      alert('⚠️ ' + msg);
+    }
+    var rc = document.getElementById('resultContent');
+    if (rc) rc.classList.add('hidden');
+    var rp = document.getElementById('resultPlaceholder');
+    if (rp) rp.classList.remove('hidden');
+  }
+  function hideApiError() {
+    var box = document.getElementById('apiErrorBox');
+    if (box) { box.classList.add('hidden'); box.style.display = 'none'; }
+  }
+
+
+  function renderResult(result) {
+      var hasTask = result.task && result.task.trim() !== '';
+      var hasDeadline = result.deadline && result.deadline.trim() !== '';
+      var hasSubmitTo = result.submit_to && result.submit_to.trim() !== '';
+      var hasSubtext = result.subtext && result.subtext.trim() !== '';
+      var hasPersonalAction = result.personal_action && result.personal_action.trim() !== '';
+      var materialsList = (result.materials && Array.isArray(result.materials)) ? result.materials.filter(function(m) { return m && m.trim() !== ''; }) : [];
+      var hasMaterials = materialsList.length > 0;
+
+      document.getElementById('resultPlaceholder').classList.add('hidden');
+      document.getElementById('resultContent').classList.remove('hidden');
+      
+      var materialsHtml = '';
+      if (hasMaterials) {
+          materialsHtml = '<div class="mt-4 flex flex-wrap gap-2">';
+          for (var i = 0; i < materialsList.length; i++) {
+              materialsHtml += '<span class="px-3 py-1 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 shadow-sm" style="background:#ffffff; color:#5a7ab8; border:1px solid #d6e4f5;">' + Icons.paperclip + safeStr(materialsList[i]) + '</span>';
+          }
+          materialsHtml += '</div>';
+      } else {
+          materialsHtml = '<div class="mt-4 text-xs italic flex items-center gap-1.5" style="color:var(--ink-lighter);">' + Icons.paperclip + '无需要准备的材料</div>';
+      }
+
+      document.getElementById('resultContent').innerHTML = 
+        '<div class="card-task p-5">' +
+          '<div class="flex items-center gap-2 mb-4">' + Icons.pin + '<span class="text-sm font-semibold" style="color:#5a7ab8;">三行摘要</span></div>' +
+          '<div class="space-y-3">' +
+            '<div class="flex items-start gap-3">' + Icons.check + '<div class="text-sm"><span style="color:var(--ink-light);">要做：</span><span class="font-semibold ' + (hasTask ? '' : 'italic') + '" style="color:' + (hasTask ? 'var(--ink)' : 'var(--ink-lighter)') + ';">' + (hasTask ? safeStr(result.task) : '无明确任务') + '</span></div></div>' +
+            '<div class="flex items-start gap-3">' + Icons.clock + '<div class="text-sm"><span style="color:var(--ink-light);">截止：</span><span class="font-semibold ' + (hasDeadline ? '' : 'italic') + '" style="color:' + (hasDeadline ? '#d97777' : 'var(--ink-lighter)') + ';">' + (hasDeadline ? safeStr(result.deadline) : '无截止日期') + '</span></div></div>' +
+            '<div class="flex items-start gap-3">' + Icons.map + '<div class="text-sm"><span style="color:var(--ink-light);">交给：</span><span class="font-semibold ' + (hasSubmitTo ? '' : 'italic') + '" style="color:' + (hasSubmitTo ? 'var(--ink)' : 'var(--ink-lighter)') + ';">' + (hasSubmitTo ? safeStr(result.submit_to) : '无需提交') + '</span></div></div>' +
+          '</div>' + materialsHtml +
+        '</div>' +
+        '<div class="card-subtext p-5">' +
+          '<div class="flex items-center gap-2 mb-2.5">' + Icons.bulb + '<span class="text-sm font-semibold" style="color:#8d6eaf;">潜台词</span></div>' +
+          '<div class="text-sm leading-relaxed ' + (hasSubtext ? '' : 'italic') + '" style="color:' + (hasSubtext ? 'var(--ink)' : 'var(--ink-lighter)') + ';">' + (hasSubtext ? safeStr(result.subtext) : '无') + '</div>' +
+        '</div>' +
+        '<div class="card-remind p-5">' +
+          '<div class="flex items-center gap-2 mb-2.5">' + Icons.user + '<span class="text-sm font-semibold" style="color:#3b7a85;">给你的提醒</span></div>' +
+          '<div class="text-sm leading-relaxed ' + (hasPersonalAction ? '' : 'italic') + '" style="color:' + (hasPersonalAction ? 'var(--ink)' : 'var(--ink-lighter)') + ';">' + (hasPersonalAction ? safeStr(result.personal_action) : '无特殊提醒') + '</div>' +
+        '</div>';
+  }
+
+  function addToFeed(originalText, task, deadline, submitTo) {
+    for (var i = 0; i < window.feedItems.length; i++) {
+      if (window.feedItems[i].task === task && window.feedItems[i].deadline === deadline) return; 
+    }
+    window.feedItems.push({ task: task, deadline: deadline, submit_to: submitTo });
+    localStorage.setItem('user_feed', JSON.stringify(window.feedItems));
+  }
+
+  function renderFeedList() {
+    var list = document.getElementById('feedList');
+    var empty = document.getElementById('feedEmpty');
+    if (window.feedItems.length === 0) { empty.style.display = 'block'; list.innerHTML = ''; return; }
+    empty.style.display = 'none'; list.innerHTML = '';
+    for (var i = window.feedItems.length - 1; i >= 0; i--) {
+      var item = window.feedItems[i];
+      var card = document.createElement('div');
+      card.className = 'rounded-xl p-3.5 cursor-pointer transition shadow-sm hover:shadow-md';
+      card.style.background = '#ffffff'; card.style.border = '1px solid #e5ecf5';
+      var deadlineText = (item.deadline && item.deadline !== '未明确') ? item.deadline : '无截止';
+      card.innerHTML = '<div class="flex justify-between items-center mb-1"><span class="text-xs font-medium inline-flex items-center gap-1.5" style="color:#d97777;">' + Icons.clock + safeStr(deadlineText) + '</span></div><div class="text-sm font-medium" style="color:var(--ink);">' + safeStr(item.task) + '</div><div class="text-xs mt-1 inline-flex items-center gap-1.5" style="color:var(--ink-light);">' + Icons.map + safeStr(item.submit_to) + '</div>';
+      card.onclick = function() { alert('任务：' + safeStr(item.task) + '\n截止：' + safeStr(item.deadline) + '\n交给：' + safeStr(item.submit_to)); };
+      list.appendChild(card);
+    }
+  }
+
+  function saveToCalendar(task, deadline, submitTo) {
+    if (!deadline || deadline === '未明确' || deadline === '无' || deadline.trim() === '') return;
+    var exists = false;
+    for (var i = 0; i < window.calendarItems.length; i++) {
+      if (window.calendarItems[i].task === task && window.calendarItems[i].deadline === deadline) { exists = true; break; }
+    }
+    if (!exists) {
+      window.calendarItems.push({ task: task, deadline: deadline, submit_to: submitTo, time: Date.now() });
+      localStorage.setItem('user_calendar', JSON.stringify(window.calendarItems));
+    }
+  }
+
+  function renderCalendar() {
+    var list = document.getElementById('calList');
+    var empty = document.getElementById('calEmpty');
+    if (window.calendarItems.length === 0) { empty.style.display = 'block'; list.innerHTML = ''; return; }
+    empty.style.display = 'none';
+    window.calendarItems.sort(function(a, b) { return extractSortKey(a.deadline) - extractSortKey(b.deadline); });
+    list.innerHTML = '';
+    for (var i = 0; i < window.calendarItems.length; i++) {
+      var item = window.calendarItems[i];
+      var deadlineStr = safeStr(item.deadline);
+      var datePart = deadlineStr.split(' ')[0];
+      var timePart = deadlineStr.split(' ')[1] || '';
+      var div = document.createElement('div');
+      div.className = 'rounded-xl p-3.5 flex justify-between items-center cursor-pointer transition shadow-sm hover:shadow-md';
+      div.style.background = '#ffffff'; div.style.border = '1px solid #e5ecf5';
+      div.innerHTML = '<div><div class="text-sm font-medium" style="color:var(--ink);">' + safeStr(item.task) + '</div><div class="text-xs mt-1 inline-flex items-center gap-1.5" style="color:var(--ink-light);">' + Icons.map + safeStr(item.submit_to) + '</div></div><div class="text-right"><div class="text-base font-bold" style="color:#d97777;">' + datePart + '</div><div class="text-xs font-medium" style="color:var(--ink-light);">' + timePart + '</div></div>';
+      div.onclick = function() { alert('任务：' + safeStr(item.task) + '\n截止：' + safeStr(item.deadline)); };
+      list.appendChild(div);
+    }
+  }
+
+  function extractSortKey(deadline) {
+    var d = safeStr(deadline);
+    if (d.indexOf('未明确') > -1) return 99999;
+    var m = d.match(/第(\d+)周/); if (m) return parseInt(m[1]) * 100;
+    m = d.match(/(\d+)月(\d+)日/); if (m) return parseInt(m[1]) * 100 + parseInt(m[2]);
+    m = d.match(/(\d+)日/); if (m) return parseInt(m[1]);
+    return 88888;
+  }
+
+  function addToMaterials(task, materialsArr) {
+    if (!materialsArr) return;
+    if (typeof materialsArr === 'string') materialsArr = [materialsArr];
+    if (!Array.isArray(materialsArr) || materialsArr.length === 0) return;
+    var cleaned = [];
+    for (var i = 0; i < materialsArr.length; i++) {
+        var mat = String(materialsArr[i]).trim();
+        if (mat && mat !== '未明确' && mat !== '无' && mat !== '[]' && cleaned.indexOf(mat) === -1) cleaned.push(mat);
+    }
+    if (cleaned.length === 0) return;
+    for (var j = 0; j < window.materialsItems.length; j++) {
+        if (window.materialsItems[j].task === task) return;
+    }
+    window.materialsItems.push({ task: task, items: cleaned });
+    localStorage.setItem('user_materials', JSON.stringify(window.materialsItems));
+  }
+
+  function renderMaterialsList() {
+    var list = document.getElementById('matList');
+    var empty = document.getElementById('matEmpty');
+    if (window.materialsItems.length === 0) { empty.style.display = 'block'; list.innerHTML = ''; return; }
+    empty.style.display = 'none'; list.innerHTML = '';
+    for (var i = window.materialsItems.length - 1; i >= 0; i--) {
+      var group = window.materialsItems[i];
+      var div = document.createElement('div');
+      div.className = 'rounded-xl p-3.5 shadow-sm';
+      div.style.background = '#ffffff'; div.style.border = '1px solid #e5ecf5';
+      div.innerHTML = '<div class="text-xs font-semibold mb-2.5 pb-2 flex items-center gap-1.5" style="color:var(--ink); border-bottom:1px solid #e5ecf5;">' + Icons.paperclip + safeStr(group.task) + '</div><div class="space-y-1.5">' + 
+        group.items.map(function(mat) {
+            return '<label class="flex items-center gap-2 text-sm cursor-pointer" style="color:var(--ink);"><input type="checkbox" class="rounded" style="accent-color:var(--blue-main);"><span>' + safeStr(mat) + '</span></label>';
+        }).join('') + '</div>';
+      list.appendChild(div);
+    }
+  }
+
+  document.getElementById('clearAllBtn').onclick = function() {
+    if (confirm('确定要清空所有历史记录、截止日期和材料清单吗？')) {
+      window.feedItems = []; window.calendarItems = []; window.materialsItems = [];
+      localStorage.removeItem('user_feed'); localStorage.removeItem('user_calendar'); localStorage.removeItem('user_materials');
+      renderAllPanels();
+    }
+  };
+
+  function renderAllPanels() { renderFeedList(); renderCalendar(); renderMaterialsList(); }
+
+  document.getElementById('fillBtn').onclick = function() {
+    document.getElementById('input').value = '根据《对外经济贸易大学学生综合素质测评办法》第12条，经研究决定，对2024-2025学年综合素质测评工作作如下调整：请各学院酌情处理，于第8周周五17:00前将汇总表交至学工部302。';
+  };
+
+  document.getElementById('clearInputBtn').onclick = function() {
+      document.getElementById('input').value = ''; document.getElementById('input').focus();
+  };
+
+  document.getElementById('shareBtn').onclick = function() {
+    var trans = document.getElementById('resultContent').innerText || '（还没有翻译内容）';
+    var preview = '校晓通 Campus Clarity · 通知翻译卡片\n\n' + trans.slice(0, 300) + '...\n\n—— 来自 ' + (window.userConfig ? window.userConfig.college : '');
+    document.getElementById('sharePreview').textContent = preview;
+    document.getElementById('shareModal').classList.remove('hidden'); document.getElementById('shareModal').classList.add('flex');
+  };
+  document.getElementById('closeShareBtn').onclick = function() { document.getElementById('shareModal').classList.add('hidden'); document.getElementById('shareModal').classList.remove('flex'); };
+  document.getElementById('copyShareBtn').onclick = function() { navigator.clipboard.writeText(document.getElementById('sharePreview').textContent); alert('已复制到剪贴板'); };
+};
+</script>
+</body>
+</html>
